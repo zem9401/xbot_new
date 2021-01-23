@@ -2,8 +2,9 @@ import os
 import json
 import torch
 import torch.nn as nn
-from transformers.modeling_albert import AlbertPreTrainedModel, AlbertModel, AlbertConfig
+from typing import Any
 from torchcrf import CRF
+from transformers import BertModel
 from data.crosswoz.data_process.nlu.nlu_dataloader import Dataloader
 from data.crosswoz.data_process.nlu.nlu_postprocess import recover_intent
 from src.xbot.constants import DEFAULT_MODEL_PATH
@@ -32,13 +33,16 @@ class SlotClassifier(nn.Module):
         x = self.dropout(x)
         return self.linear(x)
 
-class JointBERT(BertPreTrainedModel):
+class JointBERT(nn.Module):
+    def _forward_unimplemented(self, *input: Any) -> None:
+        pass
+
     def __init__(self, config, args, intent_label_lst, slot_label_lst):
         super(JointBERT, self).__init__(config)
         self.args = args
         self.num_intent_labels = len(intent_label_lst)
         self.num_slot_labels = len(slot_label_lst)
-        self.bert = BertModel(config=config)  # 加载已经预训练的Bert
+        self.bert = BertModel(config=config)  # 加载Bert模型
 
         self.intent_classifier = IntentClassifier(config.hidden_size, self.num_intent_labels, args.dropout_rate)
         self.slot_classifier = SlotClassifier(config.hidden_size, self.num_slot_labels, args.dropout_rate)
