@@ -12,26 +12,17 @@ from src.xbot.util.nlu_util import NLU
 from src.xbot.util.path import get_root_path
 from src.xbot.util.download import download_from_url
 
-class IntentClassifier(nn.Module):
-    def __init__(self, input_dim, num_intent_labels, dropout_rate=0.):
-        super(IntentClassifier, self).__init__()
+# 设置slot与Intent总分类器
+class Classifier(nn.Module):
+    def __init__(self, input_dim, num_labels, dropout_rate=0.):
+        super(Classifier, self).__init__()
         self.dropout = nn.Dropout(dropout_rate)
-        self.linear = nn.Linear(input_dim, num_intent_labels)
+        self.linear = nn.Linear(input_dim, num_labels)
 
     def forward(self, x):
         x = self.dropout(x)
         return self.linear(x)
 
-
-class SlotClassifier(nn.Module):
-    def __init__(self, input_dim, num_slot_labels, dropout_rate=0.):
-        super(SlotClassifier, self).__init__()
-        self.dropout = nn.Dropout(dropout_rate)
-        self.linear = nn.Linear(input_dim, num_slot_labels)
-
-    def forward(self, x):
-        x = self.dropout(x)
-        return self.linear(x)
 
 class JointBERT(nn.Module):
     def _forward_unimplemented(self, *input: Any) -> None:
@@ -44,8 +35,8 @@ class JointBERT(nn.Module):
         self.num_slot_labels = len(slot_label_lst)
         self.bert = BertModel(config=config)  # 加载Bert模型
 
-        self.intent_classifier = IntentClassifier(config.hidden_size, self.num_intent_labels, args.dropout_rate)
-        self.slot_classifier = SlotClassifier(config.hidden_size, self.num_slot_labels, args.dropout_rate)
+        self.intent_classifier = Classifier(config.hidden_size, self.num_intent_labels, args.dropout_rate)
+        self.slot_classifier = Classifier(config.hidden_size, self.num_slot_labels, args.dropout_rate)
 
         if args.use_crf:
             self.crf = CRF(num_tags=self.num_slot_labels, batch_first=True)
